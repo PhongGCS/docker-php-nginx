@@ -1,0 +1,60 @@
+version: '3'
+
+services:   
+    db:
+        image: mariadb
+        ports:
+            - "3307:3306"
+        volumes:
+            - "./files/docker/db-dumps/:/docker-entrypoint-initdb.d/"
+        env_file: "./files/env/docker.db.env"
+
+        container_name: ${DOCKER_CONTAINER_NAME}_db
+        networks:
+            - localdev
+    web:
+        image: nginx
+        networks:
+            - localdev
+        restart: unless-stopped
+
+        container_name: ${DOCKER_CONTAINER_NAME}_nginx
+        tty: true
+        volumes:
+            - ./files/config/ssl:/ssl
+            - ./:/source:cached
+            - ./services/:/var/www
+            - ./files/config/nginx/:/etc/nginx/conf.d/
+        ports:
+        -   ${NGINX_PORT_1}
+        -   ${NGINX_PORT_2}
+    php:
+        build:
+            context: .
+            dockerfile: Dockerfile_v2
+        image: ${DOCKER_CONTAINER_NAME}_php
+        restart: unless-stopped
+        tty: true
+        working_dir: /var/www
+        volumes:
+            - ./services/:/var/www
+            - ./files/config/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - localdev
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        links:
+            - db:db
+        ports:
+            - "8181:80"
+        environment:
+            MYSQL_USERNAME: root
+            MYSQL_ROOT_PASSWORD: wp123456        
+
+        container_name: ${DOCKER_CONTAINER_NAME}_phpmyadmin
+        networks:
+            - localdev
+
+networks:
+  localdev:
+    external: true
