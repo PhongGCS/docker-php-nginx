@@ -1,8 +1,8 @@
 # Start server
-docker-compose up -d
+sudo ./prodject-up.sh
 
 # Stop server
-docker-compose up -d
+docker-compose stop
 
 # Stop all container 
 docker stop $(docker ps -aq) 
